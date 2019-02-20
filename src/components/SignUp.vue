@@ -1,6 +1,10 @@
 <template>
   <div class="sign-up">
-    <countries></countries>
+    <v-layout row justify-center>
+        <v-flex xs1>
+          <countries/>
+        </v-flex>
+    </v-layout>
   </div>
 </template>
 
@@ -12,7 +16,7 @@ export default {
   props: {
   },
   components: {
-    Countries,
+    Countries
   }
 }
 </script>
