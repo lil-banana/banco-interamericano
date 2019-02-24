@@ -18,6 +18,7 @@
     <v-content>
       <HelloWorld/>
       <sign-up/>
+      <sign-in/>
     </v-content>
   </v-app>
 </template>
@@ -25,12 +26,14 @@
 <script>
 import HelloWorld from './components/HelloWorld'
 import SignUp from './components/SignUp'
+import SignIn from './components/SignIn'
 
 export default {
   name: 'App',
   components: {
     HelloWorld,
-    SignUp
+    SignUp,
+    SignIn
   },
   data () {
     return {

@@ -1,7 +1,9 @@
 <template>
   <v-select
+    box
     :items="countriesList"
     v-model="selectedCountry"
+    @change="updateValue"
     item-text="nativeName"
     item-value="alpha3Code"
   >
@@ -46,7 +48,7 @@
 <script>
 const URL = `https://restcountries.eu/rest/v2/alpha?codes=arg;bol;bra;chl;col;cri;cub;ecu;slv;gtm;hnd;mex;nic;pan;pry;pri;per;dom;ury;ven`
 export default {
-  name: 'countries2',
+  name: 'countries',
   data () {
       return{
           countriesList: [],
@@ -66,6 +68,16 @@ export default {
             self.countriesList = mijson;
         })
   },
+  methods: {
+    updateValue: function(value) {
+      this.$emit('input', value)
+    }
+  },
+  watch: {
+    value (val) {
+      this.selectedCountry = val // watch for changes on v-model from parent
+    }
+  }
 }
 </script>
 
