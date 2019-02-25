@@ -187,7 +187,7 @@ export default {
         this.callingcodeField.errormessages = ['Código de país requerido.']
         return false
       }else{
-        delete this.birthdateField.errormessages
+        delete this.callingcodeField.errormessages
         return true
       }
     },
@@ -196,7 +196,7 @@ export default {
         this.cellphoneField.errormessages = ['Número de celular requerido.']
         return false
       }else{
-        delete this.birthdateField.errormessages
+        delete this.cellphoneField.errormessages
         return true
       }
     },
