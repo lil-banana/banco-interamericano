@@ -41,11 +41,6 @@ export default {
   },
 
   methods: {
-    /**
-     * Sends the user an SMS-verification code using Firebase auth
-     *
-     * @see https://firebase.google.com/docs/auth/web/phone-auth
-     */
     sendSMS(){
         const self = this
         if(this.number.length < 12){
@@ -73,6 +68,7 @@ export default {
             }).catch(function (error) {
             // Error; SMS not sent
             // ...
+            
             alert('Error ! SMS not sent')
           });
         }
