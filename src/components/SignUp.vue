@@ -3,7 +3,7 @@
     <v-container v-if="showForm">
       <v-layout row justify-center>
         <v-flex xs6>
-          <v-text-field :error-messages="nameField.errormessages" label="Nombre(s)" v-model="nameField.name"/>
+          <v-text-field :error="nameField.error" :error-messages="nameField.errormessages" label="Nombre(s)" v-model="nameField.name"/>
         </v-flex>
       </v-layout>
       
@@ -15,7 +15,7 @@
       
       <v-layout row justify-center>
         <v-flex xs2>
-          <countries v-model="country"/> {{messages.country}}
+          <countries v-model="country"/>
         </v-flex>
         <v-flex xs4>
         </v-flex>
@@ -47,7 +47,7 @@
               readonly
             ></v-text-field>
             <v-date-picker show-current v-model="birthdateField.birthdate"></v-date-picker>
-          </v-menu>  {{messages.birthdate}}
+          </v-menu>
         </v-flex>
       </v-layout>
 
@@ -59,24 +59,31 @@
             v-model="callingcodeField.callingcode"
             label="+"
           ></v-select>
-          <!--v-text-field label="+" mask="####" v-model="callingcode"/-->
         </v-flex>
         <v-flex xs1></v-flex>
         <v-flex xs4>
-          <v-text-field :error-messages="cellphoneField.errormessages" label="Número de celular" mask="###########" v-model="cellphoneField.cellphone"/> {{messages.cellphone}}
+          <v-text-field :error-messages="cellphoneField.errormessages" label="Número de celular" mask="###########" v-model="cellphoneField.cellphone"/>
         </v-flex>
       </v-layout>
 
       <v-layout row justify-center>
-        <v-flex xs6>
-          <v-btn color="success" @click="signup"> Enviar </v-btn> 
+        <v-flex id="recaptcha-container" xs6>
         </v-flex>
       </v-layout>
+      
+      <v-layout row justify-center>
+        <v-flex xs6>
+          <v-btn color="success" @click="signup"> {{sendBtn.text}} </v-btn> 
+        </v-flex>
+      </v-layout>
+       {{messages.cellphone}}
     </v-container>
+
+
     <v-container v-if="!showForm">
       <v-layout row justify-center>
         <v-flex xs1>
-          <v-text-field label="OTP" mask="######" v-model="otp"/> {{messages.otp}}
+          <v-text-field :error-messages="otpField.errormessages" label="OTP" mask="######" v-model="otpField.otp"/> {{messages.otp}}
         </v-flex>
         <v-flex xs2>
           <v-btn color="success" @click="verifyOtp"> Verificar </v-btn>
@@ -94,6 +101,8 @@
 <script>
 const URL=`https://restcountries.eu/rest/v2/alpha/`
 
+import firebase from "firebase";
+
 import Countries from './Countries.vue'
 
 export default {
@@ -103,9 +112,12 @@ export default {
   },
   data () {
       return{
-        showForm: false,
+        //Estados de UI
+        showForm: true,
         messages: {},
         menu: false,
+
+        //Elementos de UI
         nameField: {
           name: '',
         },
@@ -129,32 +141,47 @@ export default {
         cellphoneField: {
           cellphone: '',
         },
-
-        otp:'',
+        otpField: {
+          otp:'',
+        },
+        sendBtn: {
+          text: 'Enviar'
+        }
       }
   },
   methods: {
     signup: function (){
       this.messages = {}
-      this.checkForm()
+      let form = this.checkForm()
+      if (form) {
+        this.sendSMS()
+      }
     },
     checkForm: function (){
-      this.checkName()
-      this.checkLastname()
-      this.checkBirthdate()
-      this.checkCallingcode()
-      this.checkCellphone()
-      return true
+      delete this.otpField.errormessages
+      let name = this.checkName()
+      let lastname = this.checkLastname()
+      let bdy = this.checkBirthdate()
+      let code = this.checkCallingcode()
+      let cellphone = this.checkCellphone()
+      if (name && lastname && bdy && code && cellphone) {
+        return true
+      }else{
+        return false
+      }
     },
     checkName: function (){
       if (this.nameField.name == '') {
         this.nameField.errormessages = ['Nombre requerido.']
+        this.nameField.error = true
         return false
       }else if(!/^[A-Z][a-z]+( [A-Z][a-z]+)?$/.test(this.nameField.name)){
         this.nameField.errormessages = ['Caracteres no permitidos / Capitalización incorrecta.']
+        this.nameField.error = true
         return false
       }else{
         delete this.nameField.errormessages
+        delete this.nameField.error
         return true
       }
     },
@@ -195,6 +222,9 @@ export default {
       if (this.cellphoneField.cellphone == '') {
         this.cellphoneField.errormessages = ['Número de celular requerido.']
         return false
+      }else if (this.cellphoneField.cellphone.length<10) {
+        this.cellphoneField.errormessages = ['Número de celular inválido.']
+        return false
       }else{
         delete this.cellphoneField.errormessages
         return true
@@ -210,14 +240,35 @@ export default {
             self.countryInfo = mijson;
         })
     },
+    sendSMS(){
+        const self = this
+        
+        let phoneNumber = self.number
+        let appVerifier = self.appVerifier
+
+        self.sendBtn.text = "Enviando SMS"
+        firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
+          .then(function (confirmationResult) {
+            // SMS sent. Prompt user to type the code from the message, then sign the
+            // user in with confirmationResult.confirm(code).
+            window.confirmationResult = confirmationResult;
+            self.showForm = false
+          })
+          .catch(function (error) {
+          // Error; SMS not sent
+          // ...
+          self.cellphoneField.errormessages = ['Error, SMS no enviado']
+        });
+    },
     verifyOtp(){
       this.messages = {}
-      if(this.number.length < 10 || this.otp.length != 6){
-        this.messages.otp = 'Formato de número/OTP inválido.'
+      if(this.otpField.otp.length != 6){
+        this.otpField.errormessages = ['Formato OTP inválido.']
+        return false
       }else{
       //
         /*let vm = this*/
-        let code = this.otp
+        let code = this.otpField.otp
         //
         window.confirmationResult.confirm(code).then(function (result) {
           // User signed in successfully.
@@ -232,23 +283,39 @@ export default {
         });
       }
     },
+    initReCaptcha(){
+      setTimeout(()=>{
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+          'size': 'invisible',
+          'callback': function(response) {
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
+            // ...
+          },
+          'expired-callback': function() {
+            // Response expired. Ask user to solve reCAPTCHA again.
+            // ...
+          }
+        });
+        //
+        this.appVerifier =  window.recaptchaVerifier
+      },1000)
+    }
   },
   mounted: function  () {
       this.changedCountry()
   },
-  /*_.debounce es una función de lodash
-  created: function (){
-    this.debouncedChangeCurrency = _.debounce(this.changeCurrency, 500)
-  },*/
+  created(){
+    this.initReCaptcha()
+  },
   watch: {
     country: function (){
       this.changedCountry()
-      this.callingcode = ''
+      this.callingcodeField.callingcode = ''
     },
-    birthdate: function (newDate,oldDate){
+    birthdate: function (){
         this.menu = false
     },
-    menu: function (newVal,oldVal){
+    menu: function (newVal){
       if (newVal) {
         delete this.birthdateField.errormessages
       }
@@ -256,7 +323,6 @@ export default {
   },
   computed: {
     number: function () {
-      // `this` points to the vm instance
       return '+' + this.callingcodeField.callingcode + this.cellphoneField.cellphone
     },
     birthdate: function () {

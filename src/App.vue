@@ -1,43 +1,42 @@
 <template>
   <v-app>
     <v-toolbar app>
-      <v-toolbar-title class="headline text-uppercase">
-        <span>Vuetify</span>
-        <span class="font-weight-light">MATERIAL DESIGN</span>
-      </v-toolbar-title>
+      <v-toolbar-title>Banco Interamericano</v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn
-        flat
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-      >
-        <span class="mr-2">Latest Release</span>
-      </v-btn>
+      <v-toolbar-items class="hidden-sm-and-down">
+        <v-btn flat v-if="state == 'sign-in'" @click="signup">Registro</v-btn>
+        <v-btn flat v-if="state == 'sign-up'" @click="signin">Inicio de Sesión</v-btn>
+      </v-toolbar-items>
     </v-toolbar>
 
     <v-content>
-      <HelloWorld/>
-      <sign-up/>
-      <sign-in/>
+      <sign-up v-if="state == 'sign-up'"/>
+      <sign-in v-if="state == 'sign-in'"/>
     </v-content>
   </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld'
 import SignUp from './components/SignUp'
 import SignIn from './components/SignIn'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld,
     SignUp,
     SignIn
   },
   data () {
     return {
-      //
+      state: "sign-in",
+    }
+  },
+  methods: {
+    signup: function () {
+      this.state = "sign-up"
+    },
+    signin: function () {
+      this.state = "sign-in"
     }
   }
 }

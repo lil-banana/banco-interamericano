@@ -1,5 +1,41 @@
 <template>
-  <div>
+  <div class="sign-in">
+    <v-container v-if="showForm">
+      <v-layout row justify-center>
+        <v-flex xs2>
+          <countries v-model="country"/>
+        </v-flex>
+        <v-flex xs4>
+        </v-flex>
+      </v-layout>
+
+      <v-layout row justify-center>
+        <v-flex xs1>
+          <v-select
+            :error-messages="callingcodeField.errormessages"
+            :items="countryInfo.callingCodes"
+            v-model="callingcodeField.callingcode"
+            label="+"
+          ></v-select>
+        </v-flex>
+        <v-flex xs1></v-flex>
+        <v-flex xs4>
+          <v-text-field :error-messages="cellphoneField.errormessages" label="Número de celular" mask="###########" v-model="cellphoneField.cellphone"/>
+        </v-flex>
+      </v-layout>
+      
+      <v-layout row justify-center>
+        <v-flex xs6>
+          <v-text-field :error-messages="lastnameField.errormessages" label="Apellidos" v-model="lastnameField.lastname"/>
+        </v-flex>
+      </v-layout>
+      <v-layout row justify-center>
+        <v-flex xs6>
+          <v-btn color="success" @click="signup"> {{sendBtn.text}} </v-btn> 
+        </v-flex>
+      </v-layout>
+       {{messages.cellphone}}
+    </v-container>
     <!-- Number Input Form -->
     <template v-if="showNumberInput">
       <v-text-field v-model="number" placeholder="Phone number"/>
@@ -24,6 +60,7 @@ export default {
 
   data() {
     return {
+      showForm: true,
       // UI States
       showNumberInput: true,
       showCodeInput: false,
@@ -36,7 +73,19 @@ export default {
       },
       signInButton: {
         text: "Sign in"
-      }
+      },
+      country: 'COL',
+      countryInfo: {
+        currencies: [{symbol:''}],
+        callingCodes: ['123']
+      },
+      //Elementos de UI
+      callingcodeField: {
+        callingcode: '',
+      },
+      cellphoneField: {
+        cellphone: '',
+      },
     };
   },
 
@@ -111,10 +160,34 @@ export default {
         //
         this.appVerifier =  window.recaptchaVerifier
       },1000)
-    }
+    },
+    changedCountry: function (){
+      const self = this
+      fetch(URL+this.country)
+        .then(function (res) {
+            return res.json();
+        })
+        .then(function (mijson) {
+            self.countryInfo = mijson;
+        })
+    },
   },
   created(){
     this.initReCaptcha()
+  },
+  mounted: function  () {
+      this.changedCountry()
+  },
+  watch: {
+    country: function (){
+      this.changedCountry()
+      this.callingcodeField.callingcode = ''
+    },
+  },
+  computed: {
+    number: function () {
+      return '+' + this.callingcodeField.callingcode + this.cellphoneField.cellphone
+    },
   }
 };
 </script>
